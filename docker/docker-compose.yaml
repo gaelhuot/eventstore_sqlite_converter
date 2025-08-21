@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  eventstore:
+    image: eventstore/eventstore:latest
+    container_name: eventstore
+    ports:
+      - "2113:2113"  # HTTP port for web UI and REST API
+      - "1113:1113"  # TCP port for client connections
+    environment:
+      - EVENTSTORE_CLUSTER_SIZE=1
+      - EVENTSTORE_RUN_PROJECTIONS=All
+      - EVENTSTORE_START_STANDARD_PROJECTIONS=true
+      - EVENTSTORE_HTTP_PORT=2113
+      - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
+      - EVENTSTORE_ENABLE_TRUSTED_AUTH=true
+      - EVENTSTORE_DISABLE_HTTP_CACHING=false
+      - EVENTSTORE_LOG_LEVEL=Information
+      - EVENTSTORE_INSECURE=true
+      - EVENTSTORE_DISABLE_FIRST_LEVEL_HTTP_AUTHORIZATION=false
+    volumes:
+      - ./eventstore/data:/var/lib/eventstore
+      - ./eventstore/logs:/var/log/eventstore
+    networks:
+      - eventstore_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:2113/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  eventstore_data:
+    driver: local
+  eventstore_logs:
+    driver: local
+
+networks:
+  eventstore_network:
+    driver: bridge
